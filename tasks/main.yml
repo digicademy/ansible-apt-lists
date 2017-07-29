@@ -1,0 +1,28 @@
+---
+- name: Copy base.list to /etc/apt/sources.list.d/
+  template:
+    src: base.list.j2
+    dest: /etc/apt/sources.list.d/base.list
+    owner: root
+    group: root
+    mode: u+rw,go+r
+
+- name: Remove lines from main sources.list
+  lineinfile:
+    dest: /etc/apt/sources.list
+    line: "{{ item }}"
+    state: absent
+  with_items: "{{ apt_sources_remove_lines }}"
+  register: apt_sources_base_list_changed
+
+- name: Copy backports.list to /etc/apt/sources.list.d/
+  template:
+    src: backports.list.j2
+    dest: /etc/apt/sources.list.d/backports.list
+    owner: root
+    group: root
+    mode: u+rw,go+r
+
+- name: Update apt cache
+  apt: update_cache=yes
+  when: apt_sources_base_list_changed.changed == true
